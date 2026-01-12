@@ -163,11 +163,11 @@ La recherche d'un learning rate optimal garantit une convergence rapide et stabl
 
 On utilise comme méthode un balayage progressif sur une échelle logarithmique a été effectué sur quelques itérations.  
 
-La perte reste stable pour des valeurs de LR allant de `0.001` à `0.05`.   
+La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.001`.   
 
-![LR finder](figures\lr_finder.png)
+![LR finder](./figures/lr_finder.png)
 
-**M4.** Le taux d'apprentissage de `0.005` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable. Le weight decay de `5\mathrm{e}{-4}` est une valeur classique, il introduit une légère régularisation L2 pour stabiliser davantage l'entraînement et prévenir le surapprentissage prématuré.
+**M4.** Le taux d'apprentissage de `0.0002` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable. Le weight decay de `5\mathrm{e}{-4}` est une valeur classique, il introduit une légère régularisation L2 pour stabiliser davantage l'entraînement et prévenir le surapprentissage prématuré.
 
 
 ---
@@ -176,30 +176,38 @@ La perte reste stable pour des valeurs de LR allant de `0.001` à `0.05`.
 
 Une mini grid search a été exécutée pour explorer rapidement l'espace des hyperparamètres clés et identifier la configuration la plus prometteuse pour l'entraînement complet.
 
-Les grilles testées sont les suivantes :  
-  - LR : {0.001, 0.005}  
-  - Weight decay : {1e-5, 5e-4}  
-  - Blocks : {(2,2,2), (3,3,3)}  
-  - Bottleneck_mid : {16, 32}  
+Grilles testées (24 runs) :
+  - LR : `{0.002, 0.005, 0.01}`
+  - Weight decay : `{5e-5, 5e-4}`
+  - Hyperparamètre modèle A (**Blocks**) : `{[2,2,2], [3,3,3]}`
+  - Hyperparamètre modèle B (**Mid**) : `{16, 32}`
 
-Epoch par run : 10
+- **Durée des runs** : `5` époques par run.
 
-## 5) Mini grid search (rapide)
+| Configuration Type | LR | WD | Hyp-A (Blocks) | Hyp-B (Mid) | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Low Reg Slow** | 0.002 | 5e-5 | [3,3,3] | 16 | À cette faible vitesse, réduire la régularisation n'accélère pas l'apprentissage mais risque de dégrader la généralisation future. |
+| **Conservative** | 0.002 | 5e-4 | [3,3,3] | 16 | Stable et progresse bien, mais reste en dessous du potentiel maximal de vitesse (sous-apprentissage). |
+| **Shallow Baseline** | 0.005 | 5e-4 | [2,2,2] | 16 | Bon LR, mais plafonne plus vite en performance que la version profonde `[3,3,3]`. |
+| **Balanced baseline**| **0.005**| **5e-4** | **[3,3,3]** | **16** | Convergence nette et rapide, sans aucun signe d'instabilité. Bon LR pour des entraînements très longs. |
+| **Wide Balanced** | 0.005 | 5e-4 | [3,3,3] | 32 | Le LR modéré supporte bien la grande charge de paramètres. Le gain de performance ne justifie cependant pas toujours le surcoût de calcul par rapport à `Mid=16`. |
+| **High performance** | **0.01** | **5e-4** | **[3,3,3]** | **16** | Le LR de 0.01 offre la pente la plus raide. Bien que plus "agressif" que le 0.005, il reste stable grâce au batch size de 64. |
+| **Fast & Unregulated**| 0.01 | 5e-5 | [3,3,3] | 16 | La pente d'apprentissage est très raide, mais l'écart Train/Val se creuse vite. Le LR fort nécessite un WD fort pour contenir les poids. |
+| **Wide & risky** | 0.01 | 5e-5 | [3,3,3] | 32 | L'association LR élevé + faible régularisation + grande capacité risque un overfitting. |
 
-| LR | WD | Hyp-A (Blocks) | Hyp-B (Mid) | Analyse |
-| :--- | :--- | :--- | :--- | :--- |
-|  0.001 | 0.0 | [2,2,2] | 16 | Convergence monotone mais lente. Risque de sous-apprentissage sur 5 époques. |
-| **0.005** | **5e-4** | **[3,3,3]** | **16** | **Combinaison favorable.** Le LR plus élevé accélère l'apprentissage, la profondeur aide l'abstraction, et le weight decay prévient l'overfitting. |
-| 0.005 | 0.0 | [3,3,3] | 32 | Risque élevé d'instabilité ou d'overfitting immédiat (la courbe val remonte "trop vite"). |
-| 0.001 | 5e-4 | [3,3,3] | 32 | Très stable mais trop lent pour atteindre une performance compétitive rapidement. |
+> TENSORBOARD GRID SEARCH
 
-> _Insérer ici une capture TensorBoard des courbes HParams ou Scalars comparant ces runs._
+**M5.** L'analyse de la grille montre une progression claire de la performance avec le LR :
+    - `0.002` est trop linéaire.
+    - `0.005` offre un excellent équilibre et une robustesse totale.
+    - `0.01` permet de gagner encore quelques points de pourcentage en début d'entraînement. Comme aucune divergence n'a été observée à `0.01`, c'est ce taux qui est privilégié pour maximiser l'apprentissage sur une durée courte/moyenne.
 
-**M5.**
-L'analyse comparative permet d'isoler la configuration **`Run_LR=0.005_WD=5e-4_Blocks=[3,3,3]_Mid=16`**. Cette combinaison est retenue pour trois raisons :
-1.  **Vitesse (LR)** : Le LR de `0.005` offre une pente de convergence nettement supérieure à `0.001`, stabilisée par le batch_size de 64. C'est une valeur sécurisée qui n'est pas trop risquée après l'analyse de la courbe lr_finder.
-2.  **Capacité** : L'architecture profonde `[3,3,3]` est plus adaptée à la complexité sémantique de CIFAR-100.
-3.  **Efficacité** : `Mid=16` (plutôt que 32) limite l'explosion du nombre de paramètres ce qui comme une régularisation structurelle.
+Quel que soit le LR choisi (0.005 ou 0.01), l'architecture profonde **`Blocks=[3,3,3]`** surclasse la version superficielle. La régularisation **`WD=5e-4`** est indispensable pour maintenir la cohérence de validation à ces vitesses.
+
+`Mid=16` (plutôt que 32) limite l'explosion du nombre de paramètres ce qui comme une régularisation structurelle.
+
+Nous retenons donc la configuration **`LR=0.01`**, **`WD=5e-4`**, **`Blocks=[3,3,3]`**, **`Mid=16`**.
+
 
 ---
 
@@ -207,8 +215,8 @@ L'analyse comparative permet d'isoler la configuration **`Run_LR=0.005_WD=5e-4_B
 
 L'entraînement final est lancé avec la configuration gagnante identifiée ci-dessus, sur une durée étendue pour permettre au modèle d'atteindre sa convergence.
 
-- **Configuration finale** :
-  - LR = `0.005`
+**Configuration finale** :
+  - LR = `0.01`
   - Weight decay = `0.0005`
   - Hyperparamètre modèle A (Blocks) = `[3, 3, 3]`
   - Hyperparamètre modèle B (Mid) = `16`
@@ -218,12 +226,12 @@ L'entraînement final est lancé avec la configuration gagnante identifiée ci-d
 
 > _Insérer ici captures TensorBoard : train/loss, val/loss, val/accuracy_
 
-**M6.** Montrez les **courbes train/val**. Interprétez :
+**M6.**
+Les courbes illustrent un bon apprentissage. Grâce au LR de `0.01`, la perte chute drastiquement. On note que par rapport aux tests à `0.005`, le gain marginal diminue après l'époque 10, suggérant qu'un scheduler réduisant le LR vers `0.001` en fin de parcours serait bénéfique.
+Choisir "l'agressivité" avec `0.01` est gagnant : le batch size de 64 encaisse les gradients forts.
 
-Sur 50 époques, nous observons une dissociation nette des phases :
-1.  **Phase d'apprentissage rapide (Époques 0-15)** : La perte chute drastiquement. Le LR de 0.005 est très efficace pour quitter les plateaux initiaux.
-2.  **Phase de consolidation (Époques 15-40)** : L'accuracy de validation progresse plus lentement. C'est ici que la profondeur du réseau (`[3,3,3]`) fait la différence pour généraliser.
-3.  **Plateau final (Époques 40-50)** : Sans scheduler (LR constant), le modèle oscille autour de son optimum. La stabilité de la courbe de validation confirme que le Weight Decay ($5e-4$) contient efficacement le surapprentissage.
+Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
+Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
 
 
 ---
@@ -232,48 +240,27 @@ Sur 50 époques, nous observons une dissociation nette des phases :
 
 Une analyse approfondie des variations d'hyperparamètres confirme leur impact sur la performance.
 
-L'analyse comparative des différents runs lors du Grid Search permet de valider empiriquement les interactions entre le learning rate, la régularisation avec le weight decay et la capacité du modèle avec la profondeur.
+> TENSORBOARD
 
-
-
-L'étude des LR révèle des comportements distincts :
-- LR = 0.001 : ce taux induit une convergence excessivement lente. Les pas de gradient trop faibles empêchent le modèle d'explorer efficacement l'espace des paramètres. Le modèle sous-performe dans la descente de gradient.
--LR = 0.01 : ce taux offre le meilleur compromis. Il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
+**M7.**
+Au niveau des LR :
+    - La courbe à $0.002$ est "plate".
+    - La courbe à $0.005$ est "courbée".
+    - La courbe à $0.01$ est "verticale" au début.
+Cela démontre que $0.005$ agit comme un pivot : c'est le début de la zone d'efficacité, mais `0.01` est l'optimum avant la zone critique. Il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
 
 La comparaison entre un weight decay nul et modéré ($5\text{e}{-4}$) met en avant la variance du modèle.
-Pas de régularisation : les courbes montrent un écart grandissant entre le train et le val. Sans contrainte forte sur les poids, le réseau tend à maximiser les coefficients de certaines neurones pour mémoriser le bruit du dataset d'entraînement (= overfitting).
+Faible régularisation ($5\text{e}{-4}$) : les courbes montrent un écart grandissant entre le train et le val. Sans contrainte forte sur les poids, le réseau tend à maximiser les coefficients de certaines neurones pour mémoriser le bruit du dataset d'entraînement (= overfitting).
 Régularisation standard ($5\text{e}{-4}$) : cette configuration a stabilisé l'entraînement. En pénalisant les poids élevés, on force le réseau à répartir l'information sur l'ensemble des neurones (représentation distribuée), ce qui améliore la robustesse face aux données de validation inconnues.
 
 La variation de la profondeur du réseau a aussi une importance.
 Architecture superficielle (2,2,2) : Le modèle converge plus vite mais sature rapidement à un niveau de performance inférieur. Il possède un biais élevé, sa capacité est insuffisante pour capturer les nuances nécessaires à la discrimination de 100 classes.
 Architecture profonde (3,3,3) : L'ajout de blocs résiduels a permis de repérer des caractéristiques plus précises. Le gain de performance sur la validation montre que la difficulté de CIFAR-100 réside davantage dans la complexité des features à extraire que dans la mémorisation, d'où l'usage d'architectures plus profondes comme ResNet/Bottleneck.
 
+Enfin, la largeur du réseau est aussi notable.
+À ces régimes de vitesse (`0.005` et `0.01`), le gradient est assez fort pour optimiser les couches profondes, rendant l'architecture large (`Mid=32`) moins pertinente car plus coûteuse et plus sujette à l'overfitting.
+
 Les observations confirment que la performance est limitée par la profondeur et la vitesse d'exploration, tout en étant sécurisée par la régularisation. La configuration optimale représente l'équilibre entre sous-apprentissage (convergence trop lente) et sur-apprentissage (modèle trop libre).
-
-> _Capture TensorBoard HParams/Scalars ou tableau récapitulatif_
-
-
-
----
-
-## 6) Entraînement complet (20 époques, sans scheduler)
-
-L'entraînement complet a été réalisé en utilisant la configuration optimale identifiée par la grid search.
-
-Les hyperparamètres utilisés sont :
-  - LR = 0.0 
-  - Weight decay = 5e-4  
-  - Blocks = (3,3,3)  
-  - Mid = 16  
-  - Batch size = 64  
-  - Époques = 15  
-
-Le checkpoint est enregistré dans `artifacts/best.ckpt`  
-
-> _Captures TensorBoard : train/loss, val/loss, val/accuracy_
-
-**M6.** Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
-Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
 
 
 ---

@@ -71,7 +71,7 @@ train:
 
   optimizer:
     name: adam
-    lr: 0.001
+    lr: 0.01
     weight_decay: 0.0005
     momentum: 0.9
 
@@ -93,8 +93,8 @@ metrics:
 # Mini Grid Search
 # ---------------------------------------------------------
 hparams:
-  lr: [0.0002, 0.001]
-  weight_decay: [0.0, 0.0005]
+  lr: [0.002, 0.005, 0.01]
+  weight_decay: [0.00005, 0.0005]
   blocks: [[2,2,2], [3,3,3]]
   bottleneck_mid: [16, 32]
 
