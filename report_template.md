@@ -6,7 +6,7 @@
 
 - **Étudiant·e** : ROLAND, Jade  
 - **Projet** : CIFAR-100 × BottleneckNet (classification 100 classes)  
-- **Dépôt Git** : _à compléter_  
+- **Dépôt Git** : https://github.com/jaderld/csc8607_projects  
 - **Environnement** : `python 3.11`, `torch 2.1.0`, `cuda 12.2`  
 - **Commandes utilisées** :
   - Entraînement : `python -m src.train --config configs/config.yaml`
