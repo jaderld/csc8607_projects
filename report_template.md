@@ -245,9 +245,9 @@ Une analyse approfondie des variations d'hyperparamètres confirme leur impact s
 
 **M7.**
 Au niveau des LR :
-    - La courbe à $0.002$ est "plate".
-    - La courbe à $0.005$ est "courbée".
-    - La courbe à $0.01$ est "verticale" au début.
+    - La courbe à $0.002$ est plate.
+    - Les courbes à $0.005$ sont plus courbées.
+    - Les courbes à $0.01$ sont plus raides au début.
 Cela démontre que $0.005$ agit comme un pivot : c'est le début de la zone d'efficacité, mais `0.01` est l'optimum avant la zone critique. Il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
 
 La comparaison entre un weight decay nul et modéré ($5\text{e}{-4}$) met en avant la variance du modèle.
