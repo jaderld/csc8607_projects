@@ -230,54 +230,6 @@ Sur 50 époques, nous observons une dissociation nette des phases :
 
 ## 7) Comparaisons de courbes (analyse)
 
-L'analyse critique des résultats de la Grid Search met en lumière trois dynamiques fondamentales du Deep Learning sur ce dataset.
-
-> _Insérer ici 2-3 captures superposant les courbes pour illustrer les points ci-dessous._
-
-**M7.** Trois **comparaisons** commentées :
-
-1.  **Learning Rate (Stabilité vs Vitesse)** : La restriction de la recherche à l'intervalle $[0.001, 0.005]$ a été bénéfique. Le LR de $0.001$ s'est avéré trop conservateur (apprentissage linéaire lent), tandis que le LR de $0.005$ représente le **"Sweet Spot"** : il permet de s'extraire rapidement des minimums locaux initiaux tout en restant stable grâce au lissage du gradient apporté par le Batch Size de 64.
-2.  **Profondeur vs Largeur (Depth vs Width)** : L'ajout de blocs (`[2,2,2]` $\to$ `[3,3,3]`) améliore systématiquement la généralisation, validant le besoin d'abstraction sémantique pour les 100 classes. À l'inverse, élargir le réseau (`Mid=32`) tend à favoriser la mémorisation du bruit (overfitting précoce) plutôt que l'apprentissage de concepts.
-3.  **Régularisation (Weight Decay)** : L'interaction est confirmée : avec l'architecture la plus profonde, l'absence de Weight Decay ($WD=0$) creuse l'écart Train/Val. L'application de $WD=5e-4$ permet de "contenir" la capacité du modèle profond, transformant le potentiel de surapprentissage en une meilleure généralisation.
-
-| Run | LR | WD | Blocks | Mid | Val Acc | Val Loss | Notes |
-|-----|----|----|--------|-----|---------|----------|-------|
-| run1 |0.05 |1e-5 |2,2,2 |16 |52% |1.63 | stable |
-| run2 |0.068|1e-5 |2,2,2 |16 |54% |1.60 | meilleur compromis |
-| run3 |0.068|5e-4 |3,3,3 |16 |58% |1.53 | plateau plus haut |
-| run4 |0.068|5e-4 |3,3,3 |32 |56% |1.57 | plus de canaux, léger gain |
-| run5 |0.08 |5e-4 |3,3,3 |16 |57% |1.55 | converge plus vite, légère instabilité |
-
-> _Capture TensorBoard HParams/Scalars ou tableau récapitulatif_
-
-
-
----
-
-## 6) Entraînement complet (20 époques, sans scheduler)
-
-L'entraînement complet a été réalisé en utilisant la configuration optimale identifiée par la recherche par grille.
-
-Les hyperparamètres utilisés sont :
-  - LR = 0.0 
-  - Weight decay = 5e-4  
-  - Blocks = (3,3,3)  
-  - Mid = 16  
-  - Batch size = 64  
-  - Époques = 15  
-
-Le checkpoint est enregistré dans `artifacts/best.ckpt`  
-
-> _Captures TensorBoard : train/loss, val/loss, val/accuracy_
-
-**M6.** Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
-Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
-
-
----
-
-## 7) Comparaisons de courbes (analyse)
-
 Une analyse approfondie des variations d'hyperparamètres confirme leur impact sur la performance.
 
 L'analyse comparative des différents runs lors du Grid Search permet de valider empiriquement les interactions entre le learning rate, la régularisation avec le weight decay et la capacité du modèle avec la profondeur.
@@ -298,34 +250,68 @@ Architecture profonde (3,3,3) : L'ajout de blocs résiduels a permis de repérer
 
 Les observations confirment que la performance est limitée par la profondeur et la vitesse d'exploration, tout en étant sécurisée par la régularisation. La configuration optimale représente l'équilibre entre sous-apprentissage (convergence trop lente) et sur-apprentissage (modèle trop libre).
 
+> _Capture TensorBoard HParams/Scalars ou tableau récapitulatif_
+
+
 
 ---
 
-## 8) Itération supplémentaire (si temps)
+## 6) Entraînement complet (20 époques, sans scheduler)
 
-- Changement : test bottleneck_mid=32 sur blocks=3,3,3  
-- Résultat : val acc ≈56% → léger gain mais plateau inférieur à mid=16
+L'entraînement complet a été réalisé en utilisant la configuration optimale identifiée par la grid search.
 
-**M8.** Augmentation du mid ne garantit pas meilleure performance ; compromis capacité/stabilité à considérer.
+Les hyperparamètres utilisés sont :
+  - LR = 0.0 
+  - Weight decay = 5e-4  
+  - Blocks = (3,3,3)  
+  - Mid = 16  
+  - Batch size = 64  
+  - Époques = 15  
+
+Le checkpoint est enregistré dans `artifacts/best.ckpt`  
+
+> _Captures TensorBoard : train/loss, val/loss, val/accuracy_
+
+**M6.** Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
+Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
+
 
 ---
 
-## 9) Évaluation finale (test)
+## 8) Évaluation finale (test)
 
 - Checkpoint : `artifacts/best.ckpt`  
-- Métriques test :  
+Les métriques sur le jeu de test sont les suivantes :  
   - Accuracy : 58.4%  
   - Loss : 1.54  
 
-**M9.** Test proche de validation → surapprentissage limité, modèle généralise correctement sans augmentation.
+**M9.** Les métriques de test sont proches de celles du jeu de validation. Le surapprentissage est limité, le modèle généralise correctement sans augmentation.
+
 
 ---
 
 ## 10) Limites, erreurs & bug diary
 
-- Limites : pas d’augmentation, dataset petit pour deep net, entraînement limité à 15-20 epochs  
-- Erreurs rencontrées : shape mismatch sur shortcut → corrigé avec Conv1x1 projection  
-- Idée si plus de temps/compute : ajouter augmentation, LR scheduler, longer epochs
+1. Complexité de la configuration et gestion des hyperparamètres
+L’une des principales difficultés du projet a concerné la gestion cohérente des configurations d’entraînement et des hyperparamètres. Le projet repose sur un fichier YAML central décrivant à la fois l’architecture du modèle, les paramètres d’optimisation et les chemins de sortie. Lors de l’implémentation de la grid search, des conflits sont apparus entre les valeurs définies dans la configuration de base et celles surchargées dynamiquement en mémoire.
+En particulier, certaines implémentations initiales entraînaient la création involontaire de fichiers ou dossiers temporaires (ex. dossiers grid/ ou configurations intermédiaires), ce qui compliquait la traçabilité des expériences et allait à l’encontre des consignes du projet. Une attention particulière a donc été portée à la modification en mémoire uniquement des hyperparamètres, sans génération de nouveaux fichiers de configuration.
+
+2. Instabilité des performances lors de la grid search
+Un problème majeur observé a été la dégradation significative des performances lors de l’exécution de la grid search, alors que l’entraînement standard avec des hyperparamètres fixes produisait de bonnes performances. Cette instabilité s’explique par plusieurs facteurs : exploration de learning rates trop élevés, notamment ceux suggérés par le LR finder mais inadaptés à un entraînement complet sur plusieurs epochs ; combinaison de certains hyperparamètres menant à des dynamiques d’optimisation défavorables ; réinitialisation complète du modèle à chaque run, ce qui rend les performances très sensibles aux choix d’hyperparamètres.
+Ce constat a nécessité une réduction raisonnée de l’espace de recherche et l’exclusion de paramètres secondaires (comme le batch size) afin de limiter le bruit expérimental.
+
+3. Interprétation délicate du learning rate finder
+Le learning rate finder a fourni des valeurs de learning rate relativement élevées (par exemple autour de 0.05–0.07). Bien que ces valeurs correspondent à une phase de descente rapide de la loss, elles se sont révélées peu adaptées à un entraînement long, entraînant une convergence lente voire instable lors de la grid search.
+Cela met en évidence une limite classique de cette méthode : le LR finder indique une zone où la loss commence à diminuer rapidement, mais cette valeur doit être interprétée comme une borne supérieure et non comme un learning rate optimal directement exploitable.
+
+4. Effets de bord liés aux checkpoints
+Une autre difficulté importante a concerné la gestion des checkpoints. Une implémentation naïve de la sauvegarde du meilleur modèle entraînait l’écrasement systématique du fichier best.ckpt lors des runs successifs de la grid search. Cela rendait les résultats incohérents et empêchait toute comparaison fiable entre les expériences.
+La solution adoptée a consisté à désactiver explicitement les checkpoints pendant la grid search et à réserver la sauvegarde du meilleur modèle à l’entraînement final, une fois les hyperparamètres sélectionnés.
+
+5. Temps de calcul et contraintes matérielles
+Les expérimentations ont été réalisées principalement sur CPU, ce qui a fortement limité la taille de la grid search exploitable. Il a donc été nécessaire de réduire : le nombre de combinaisons d’hyperparamètres, le nombre d’epochs par run,et de privilégier une exploration ciblée plutôt qu’exhaustive.
+Cette contrainte a conduit à un compromis entre exhaustivité de la recherche et faisabilité computationnelle, ce qui constitue une limite intrinsèque du projet.
+
 
 ---
 

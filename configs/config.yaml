@@ -93,13 +93,13 @@ metrics:
 # Mini Grid Search
 # ---------------------------------------------------------
 hparams:
-  lr: [0.001, 0.005]
+  lr: [0.0002, 0.001]
   weight_decay: [0.0, 0.0005]
   blocks: [[2,2,2], [3,3,3]]
   bottleneck_mid: [16, 32]
 
 grid:
-  epochs: 10   # entraînements courts pour la recherche
+  epochs: 5   # entraînements courts pour la recherche
 
 # ---------------------------------------------------------
 # Chemins
