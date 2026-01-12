@@ -222,9 +222,10 @@ L'entraînement final est lancé avec la configuration gagnante identifiée ci-d
   - Hyperparamètre modèle B (Mid) = `16`
   - Batch size = `64`
   - Époques = `20`
-- **Checkpoint** : `artifacts/best.ckpt`
 
-> _Insérer ici captures TensorBoard : train/loss, val/loss, val/accuracy_
+Le checkpoint est sauvegardé dans `artifacts/best.ckpt`
+
+> TENSORBOARD
 
 **M6.**
 Les courbes illustrent un bon apprentissage. Grâce au LR de `0.01`, la perte chute drastiquement. On note que par rapport aux tests à `0.005`, le gain marginal diminue après l'époque 10, suggérant qu'un scheduler réduisant le LR vers `0.001` en fin de parcours serait bénéfique.
