@@ -148,18 +148,18 @@ La configuration du test est la suivante :
 - Optimisation : LR=0.001, weight decay=0  
 - Nombre d'epoch : 50.
 
-![Overfit acc](figures\overfit_train_acc.png)
-![Overfit loss](figures\overfit_train_loss.png)
-![Overfit val](figures\overfit_val_metrics.png)
+![Overfit acc](./figures/overfit_train_acc.png)
+![Overfit loss](./figures/overfit_train_loss.png)
+![Overfit val](./figures/overfit_val_metrics.png)
 
-**M3.** L'observation des courbes montre clairement que la perte d'entraînement (train loss) converge vers zéro, tandis que la perte de validation (val loss) diverge rapidement. En parallèle, l’accuracy à l'entraînement (train acc) atteint les 98%. Le réseau de neurones possède la capacité structurelle nécessaire pour mémoriser parfaitement un petit jeu de données (sur-apprentissage), validant ainsi son implémentation.
+**M3.** L'observation des courbes montre clairement que la perte d'entraînement converge vers zéro, tandis que la perte de validation diverge rapidement. En parallèle, l’accuracy à l'entraînement (train acc) atteint les 98%. Le réseau de neurones possède la capacité structurelle nécessaire pour mémoriser parfaitement un petit jeu de données (sur-apprentissage), validant ainsi son implémentation.
 
 
 ---
 
 ## 4) LR finder
 
-La recherche d'un learning rate optimal garantit une convergence rapide et stable. La méthode de balayage exponentiel du LR (LR finder) a été utilisée.
+La recherche d'un learning rate optimal garantit une convergence rapide et stable. La méthode du LR finder a été utilisée.
 
 On utilise comme méthode un balayage progressif sur une échelle logarithmique a été effectué sur quelques itérations.  
 
@@ -167,7 +167,7 @@ La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.001`.
 
 ![LR finder](./figures/lr_finder.png)
 
-**M4.** Le taux d'apprentissage de `0.0002` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable. Le weight decay de `5\mathrm{e}{-4}` est une valeur classique, il introduit une légère régularisation L2 pour stabiliser davantage l'entraînement et prévenir le surapprentissage prématuré.
+**M4.** Le taux d'apprentissage de `0.002` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable.
 
 
 ---
