@@ -1,56 +1,87 @@
-# src/grid_search.py
+"""
+Mini grid search.
+
+Exécutable via :
+    python -m src.grid_search --config configs/config.yaml
+"""
+
 import argparse
 import itertools
+import copy
 import os
 import yaml
 from torch.utils.tensorboard import SummaryWriter
-from src.train import train_single_run  # fonction à créer dans train.py pour un run isolé
-from src.utils import save_config_snapshot, set_seed
+
+from src.train import train_one_run
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
-    parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
-    # lecture config
     with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+        base_config = yaml.safe_load(f)
 
-    set_seed(args.seed)
-    hparams = config.get("hparams", {})
+    # Récupération des listes d'hyperparamètres
+    h = base_config["hparams"]
+    lr_list = h["lr"]
+    wd_list = h["weight_decay"]
+    blocks_list = h["blocks"]           # Hyperparamètre Modèle A
+    mid_list = h["bottleneck_mid"]      # Hyperparamètre Modèle B
 
-    # générer toutes les combinaisons possibles
-    keys, values = zip(*hparams.items())
-    combos = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    runs_root = os.path.join(base_config["paths"]["runs_dir"], "grid_search")
+    os.makedirs(runs_root, exist_ok=True)
 
-    # créer dossier runs/grid_search
-    gs_runs_dir = os.path.join(config["paths"]["runs_dir"], "grid_search")
-    os.makedirs(gs_runs_dir, exist_ok=True)
+    run_id = 0
 
-    for i, combo in enumerate(combos):
-        print(f"\n=== Grid search run {i+1}/{len(combos)} : {combo} ===")
-        run_name = f"run_{i+1}"
-        writer = SummaryWriter(log_dir=os.path.join(gs_runs_dir, run_name))
+    # On itère sur LR, Weight Decay, Blocks et Bottleneck Mid
+    # Le batch_size reste fixe (celui défini dans base_config['train'])
+    for lr, wd, blocks, mid in itertools.product(lr_list, wd_list, blocks_list, mid_list):
+        run_id += 1
+        
+        # Astuce : on convertit la liste blocks en string sans espaces pour le nom du fichier
+        blocks_str = str(blocks).replace(" ", "")
+        
+        run_name = f"run{run_id}_lr={lr}_wd={wd}_blocks={blocks_str}_mid={mid}"
+        print(f"\n▶ {run_name}")
 
-        # mettre à jour config avec cette combinaison
-        run_config = config.copy()
-        for k, v in combo.items():
-            # mettre à jour la section train si l'hparam s'y trouve
-            if k in run_config["train"]:
-                run_config["train"][k] = v
+        config = copy.deepcopy(base_config)
+        
+        # Injection des hyperparamètres d'entraînement
+        config["train"]["optimizer"]["lr"] = lr
+        config["train"]["optimizer"]["weight_decay"] = wd
+        
+        # Injection des hyperparamètres du modèle (A et B)
+        config["model"]["blocks"] = blocks
+        config["model"]["bottleneck_mid"] = mid
 
-        # sauvegarder config snapshot
-        save_config_snapshot(run_config, os.path.join(gs_runs_dir, run_name))
+        # Lancement de l'entraînement
+        # Note : on utilise config['grid']['epochs'] si dispo, sinon 5 par défaut pour aller vite
+        grid_epochs = base_config.get("grid", {}).get("epochs", 5)
 
-        # lancer entraînement pour ce set d'hyperparams
-        metrics = train_single_run(run_config, writer)  # doit retourner dict métriques finales
+        metrics = train_one_run(
+            config=config,
+            run_name=f"grid_search/{run_name}",
+            max_epochs=grid_epochs,
+            disable_checkpoint=True,
+        )
 
-        # log hparams + metrics sur TensorBoard
-        writer.add_hparams(combo, metrics)
+        # Log des HParams dans TensorBoard
+        writer = SummaryWriter(os.path.join(runs_root, run_name))
+        writer.add_hparams(
+            {
+                "lr": lr, 
+                "weight_decay": wd, 
+                "blocks": str(blocks),  # TensorBoard préfère les strings aux listes
+                "bottleneck_mid": mid
+            },
+            metrics,
+        )
         writer.close()
 
-    print("\n=== Grid search terminé ===")
+    print("\nGrid search terminée")
+
 
 if __name__ == "__main__":
     main()

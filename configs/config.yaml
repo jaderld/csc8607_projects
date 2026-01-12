@@ -1,4 +1,6 @@
-# Configuration complète pour le projet CIFAR-100 avec BottleneckNet
+# =========================================================
+# Configuration complète — CIFAR-100 + BottleneckNet
+# =========================================================
 
 dataset:
   name: CIFAR100
@@ -7,13 +9,19 @@ dataset:
   num_workers: 4
   shuffle: true
 
+# ---------------------------------------------------------
+# Prétraitement
+# ---------------------------------------------------------
 preprocess:
-  resize: null                       # images déjà 32x32, pas besoin de resize
+  resize: null
   normalize:
-    mean: [0.5071, 0.4867, 0.4408]  # mean des channels CIFAR-100
-    std: [0.2675, 0.2565, 0.2761]   # std des channels CIFAR-100
+    mean: [0.5071, 0.4867, 0.4408]
+    std:  [0.2675, 0.2565, 0.2761]
   text_tokenizer: null
 
+# ---------------------------------------------------------
+# Augmentation (désactivée pour expériences principales)
+# ---------------------------------------------------------
 augment:
   random_flip: true
   random_crop:
@@ -26,23 +34,33 @@ augment:
     hue: 0.1
   spec_augment: null
 
+# ---------------------------------------------------------
+# Modèle
+# ---------------------------------------------------------
 model:
   type: bottleneck_net
   num_classes: 100
   input_shape: [3, 32, 32]
-  blocks: [2, 2, 2]       # (B1, B2, B3)
-  bottleneck_mid: 16       # facteur goulot pour stage 1
+
+  # Valeurs par défaut (utilisées hors grid search)
+  blocks: [2, 2, 2]
+  bottleneck_mid: 16
+
   activation: relu
   dropout: 0.0
   batch_norm: true
   residual: true
   attention: false
+
   rnn:
     type: null
     hidden_size: null
     num_layers: null
     bidirectional: false
 
+# ---------------------------------------------------------
+# Entraînement
+# ---------------------------------------------------------
 train:
   seed: 42
   device: auto
@@ -63,16 +81,29 @@ train:
     gamma: 0.1
     warmup_steps: 0
 
+# ---------------------------------------------------------
+# Métriques
+# ---------------------------------------------------------
 metrics:
   classification:
     - accuracy
   regression: []
 
+# ---------------------------------------------------------
+# Mini Grid Search
+# ---------------------------------------------------------
 hparams:
-  lr: [0.0005, 0.001, 0.005]
-  batch_size: [32, 64]
+  lr: [0.001, 0.005]
   weight_decay: [0.0, 0.0005]
+  blocks: [[2,2,2], [3,3,3]]
+  bottleneck_mid: [16, 32]
 
+grid:
+  epochs: 10   # entraînements courts pour la recherche
+
+# ---------------------------------------------------------
+# Chemins
+# ---------------------------------------------------------
 paths:
   runs_dir: "./runs"
   artifacts_dir: "./artifacts"
