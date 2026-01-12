@@ -305,11 +305,11 @@ Cette contrainte a conduit à un compromis entre exhaustivité de la recherche e
 ## 11) Reproductibilité
 
 - Seed : 42  
-- Config utilisée : `configs/config.yaml` (extrait pertinent déjà fourni ci-dessus)  
+- Config utilisée : `configs/config.yaml`  
 - Commandes exactes :
 
 ```bash
-python -m src.train --config configs/config.yaml --max_epochs 15
+python -m src.train --config configs/config.yaml
 python -m src.lr_finder --config configs/config.yaml
 python -m src.grid_search --config configs/config.yaml
 python -m src.evaluate --config configs/config.yaml --checkpoint artifacts/best.ckpt
