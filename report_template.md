@@ -163,11 +163,11 @@ La recherche d'un learning rate optimal garantit une convergence rapide et stabl
 
 On utilise comme méthode un balayage progressif sur une échelle logarithmique a été effectué sur quelques itérations.  
 
-La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.001`.   
+La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.01`.   
 
 ![LR finder](./figures/lr_finder.png)
 
-**M4.** Le taux d'apprentissage de `0.002` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable.
+**M4.** Le taux d'apprentissage de `0.005` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable.
 
 
 ---
