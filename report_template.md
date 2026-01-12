@@ -195,7 +195,8 @@ Grilles testées (24 runs) :
 | **Fast & Unregulated**| 0.01 | 5e-5 | [3,3,3] | 16 | La pente d'apprentissage est très raide, mais l'écart Train/Val se creuse vite. Le LR fort nécessite un WD fort pour contenir les poids. |
 | **Wide & risky** | 0.01 | 5e-5 | [3,3,3] | 32 | L'association LR élevé + faible régularisation + grande capacité risque un overfitting. |
 
-> TENSORBOARD GRID SEARCH
+![GS Train](./figures/grid_search_train.png)
+![GS Val](./figures/grid_search_val.png)
 
 **M5.** L'analyse de la grille montre une progression claire de la performance avec le LR :
     - `0.002` est trop linéaire.
@@ -225,8 +226,6 @@ L'entraînement final est lancé avec la configuration gagnante identifiée ci-d
 
 Le checkpoint est sauvegardé dans `artifacts/best.ckpt`
 
-> TENSORBOARD
-
 **M6.**
 Les courbes illustrent un bon apprentissage. Grâce au LR de `0.01`, la perte chute drastiquement. On note que par rapport aux tests à `0.005`, le gain marginal diminue après l'époque 10, suggérant qu'un scheduler réduisant le LR vers `0.001` en fin de parcours serait bénéfique.
 Choisir "l'agressivité" avec `0.01` est gagnant : le batch size de 64 encaisse les gradients forts.
@@ -241,7 +240,8 @@ Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraîn
 
 Une analyse approfondie des variations d'hyperparamètres confirme leur impact sur la performance.
 
-> TENSORBOARD
+![GS Train](./figures/grid_search_train.png)
+![GS Val](./figures/grid_search_val.png)
 
 **M7.**
 Au niveau des LR :
@@ -280,25 +280,26 @@ Les métriques sur le jeu de test sont les suivantes :
 
 ## 10) Limites, erreurs & bug diary
 
-1. Complexité de la configuration et gestion des hyperparamètres
+Durant le développement et l’expérimentation, plusieurs difficultés techniques et conceptuelles ont été rencontrées :
+
+1. Complexité de la configuration et gestion des hyperparamètres : 
 L’une des principales difficultés du projet a concerné la gestion cohérente des configurations d’entraînement et des hyperparamètres. Le projet repose sur un fichier YAML central décrivant à la fois l’architecture du modèle, les paramètres d’optimisation et les chemins de sortie. Lors de l’implémentation de la grid search, des conflits sont apparus entre les valeurs définies dans la configuration de base et celles surchargées dynamiquement en mémoire.
 En particulier, certaines implémentations initiales entraînaient la création involontaire de fichiers ou dossiers temporaires (ex. dossiers grid/ ou configurations intermédiaires), ce qui compliquait la traçabilité des expériences et allait à l’encontre des consignes du projet. Une attention particulière a donc été portée à la modification en mémoire uniquement des hyperparamètres, sans génération de nouveaux fichiers de configuration.
 
-2. Instabilité des performances lors de la grid search
+2. Instabilité des performances lors de la grid search : 
 Un problème majeur observé a été la dégradation significative des performances lors de l’exécution de la grid search, alors que l’entraînement standard avec des hyperparamètres fixes produisait de bonnes performances. Cette instabilité s’explique par plusieurs facteurs : exploration de learning rates trop élevés, notamment ceux suggérés par le LR finder mais inadaptés à un entraînement complet sur plusieurs epochs ; combinaison de certains hyperparamètres menant à des dynamiques d’optimisation défavorables ; réinitialisation complète du modèle à chaque run, ce qui rend les performances très sensibles aux choix d’hyperparamètres.
 Ce constat a nécessité une réduction raisonnée de l’espace de recherche et l’exclusion de paramètres secondaires (comme le batch size) afin de limiter le bruit expérimental.
 
-3. Interprétation délicate du learning rate finder
-Le learning rate finder a fourni des valeurs de learning rate relativement élevées (par exemple autour de 0.05–0.07). Bien que ces valeurs correspondent à une phase de descente rapide de la loss, elles se sont révélées peu adaptées à un entraînement long, entraînant une convergence lente voire instable lors de la grid search.
+3. Interprétation délicate du learning rate finder : 
+Le learning rate finder a indiqué des valeurs de learning rate relativement élevées et était de façon générale assez difficile à analyser. Bien que ces valeurs correspondent à une phase de descente rapide de la loss, elles se sont révélées peu adaptées à un entraînement long, entraînant une convergence lente voire instable lors de la grid search.
 Cela met en évidence une limite classique de cette méthode : le LR finder indique une zone où la loss commence à diminuer rapidement, mais cette valeur doit être interprétée comme une borne supérieure et non comme un learning rate optimal directement exploitable.
 
-4. Effets de bord liés aux checkpoints
+4. Effets de bord liés aux checkpoints : 
 Une autre difficulté importante a concerné la gestion des checkpoints. Une implémentation naïve de la sauvegarde du meilleur modèle entraînait l’écrasement systématique du fichier best.ckpt lors des runs successifs de la grid search. Cela rendait les résultats incohérents et empêchait toute comparaison fiable entre les expériences.
 La solution adoptée a consisté à désactiver explicitement les checkpoints pendant la grid search et à réserver la sauvegarde du meilleur modèle à l’entraînement final, une fois les hyperparamètres sélectionnés.
 
-5. Temps de calcul et contraintes matérielles
+5. Temps de calcul et contraintes matérielles : 
 Les expérimentations ont été réalisées principalement sur CPU, ce qui a fortement limité la taille de la grid search exploitable. Il a donc été nécessaire de réduire : le nombre de combinaisons d’hyperparamètres, le nombre d’epochs par run,et de privilégier une exploration ciblée plutôt qu’exhaustive.
-Cette contrainte a conduit à un compromis entre exhaustivité de la recherche et faisabilité computationnelle, ce qui constitue une limite intrinsèque du projet.
 
 
 ---
