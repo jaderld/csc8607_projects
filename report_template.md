@@ -200,14 +200,14 @@ Grilles testées (24 runs) :
 
 **M5.** L'analyse de la grille montre une progression claire de la performance avec le LR :
     - `0.0005` est trop linéaire.
-    - `0.001` offre un excellent équilibre et une robustesse totale.
-    - `0.002` permet de gagner encore quelques points de pourcentage en début d'entraînement. Comme aucune divergence n'a été observée à `0.002`, c'est ce taux qui est privilégié pour maximiser l'apprentissage sur une durée courte/moyenne.
+    - `0.001` offre un excellent équilibre et une robustesse totale. C'est un très bon choix pour des entraînements longs.
+    - `0.002` permet de gagner encore quelques points de pourcentage en début d'entraînement. Comme aucune divergence n'a été observée à `0.002`, c'est un taux à privilégier pour maximiser l'apprentissage sur une durée courte/moyenne.
 
 Quel que soit le LR choisi (0.001 ou 0.002), l'architecture profonde **`Blocks=[3,3,3]`** surclasse la version superficielle. La régularisation **`WD=5e-4`** est indispensable pour maintenir la cohérence de validation à ces vitesses.
 
 `Mid=16` (plutôt que 32) limite l'explosion du nombre de paramètres ce qui comme une régularisation structurelle.
 
-Nous retenons donc la configuration **`LR=0.002`**, **`WD=5e-4`**, **`Blocks=[3,3,3]`**, **`Mid=16`**.
+Nous retenons donc la configuration **`LR=0.001`**, **`WD=5e-4`**, **`Blocks=[3,3,3]`**, **`Mid=16`**. Le choix de `0.001` est plus sûr pour un entraînement de 20 epochs, tandis que `0.002` pourrait être envisagé pour des runs de 10-15 epochs.
 
 
 ---
@@ -270,8 +270,8 @@ Les observations confirment que la performance est limitée par la profondeur et
 
 - Checkpoint : `artifacts/best.ckpt`  
 Les métriques sur le jeu de test sont les suivantes :  
-  - Accuracy : 58.4%  
-  - Loss : 1.54  
+  - Accuracy : 50.2%  
+  - Loss : 1.8  
 
 **M9.** Les métriques de test sont proches de celles du jeu de validation. Le surapprentissage est limité, le modèle généralise correctement sans augmentation.
 
