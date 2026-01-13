@@ -1,5 +1,5 @@
 # =========================================================
-# Configuration complète — CIFAR-100 + BottleneckNet
+# Configuration CIFAR-100 + BottleneckNet
 # =========================================================
 
 dataset:
@@ -20,7 +20,7 @@ preprocess:
   text_tokenizer: null
 
 # ---------------------------------------------------------
-# Augmentation (désactivée pour expériences principales)
+# Augmentation
 # ---------------------------------------------------------
 augment:
   random_flip: true
@@ -42,8 +42,7 @@ model:
   num_classes: 100
   input_shape: [3, 32, 32]
 
-  # Valeurs par défaut (utilisées hors grid search)
-  blocks: [2, 2, 2]
+  blocks: [3, 3, 3]
   bottleneck_mid: 16
 
   activation: relu
@@ -65,13 +64,13 @@ train:
   seed: 42
   device: auto
   batch_size: 64
-  epochs: 50
+  epochs: 20
   max_steps: null
   overfit_small: false
 
   optimizer:
     name: adam
-    lr: 0.01
+    lr: 0.005
     weight_decay: 0.0005
     momentum: 0.9
 
@@ -99,7 +98,7 @@ hparams:
   bottleneck_mid: [16, 32]
 
 grid:
-  epochs: 5   # entraînements courts pour la recherche
+  epochs: 5
 
 # ---------------------------------------------------------
 # Chemins

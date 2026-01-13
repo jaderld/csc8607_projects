@@ -217,7 +217,7 @@ Nous retenons donc la configuration **`LR=0.01`**, **`WD=5e-4`**, **`Blocks=[3,3
 L'entraînement final est lancé avec la configuration gagnante identifiée ci-dessus, sur une durée étendue pour permettre au modèle d'atteindre sa convergence.
 
 **Configuration finale** :
-  - LR = `0.01`
+  - LR = `0.005`
   - Weight decay = `0.0005`
   - Hyperparamètre modèle A (Blocks) = `[3, 3, 3]`
   - Hyperparamètre modèle B (Mid) = `16`
@@ -227,8 +227,8 @@ L'entraînement final est lancé avec la configuration gagnante identifiée ci-d
 Le checkpoint est sauvegardé dans `artifacts/best.ckpt`
 
 **M6.**
-Les courbes illustrent un bon apprentissage. Grâce au LR de `0.01`, la perte chute drastiquement. On note que par rapport aux tests à `0.005`, le gain marginal diminue après l'époque 10, suggérant qu'un scheduler réduisant le LR vers `0.001` en fin de parcours serait bénéfique.
-Choisir "l'agressivité" avec `0.01` est gagnant : le batch size de 64 encaisse les gradients forts.
+Les courbes illustrent un bon apprentissage. Grâce au LR, la perte chute drastiquement.
+Choisir une certaine "agressivité" avec `0.005` est gagnant : le batch size de 64 encaisse les gradients forts.
 
 Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
 Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
@@ -248,7 +248,7 @@ Au niveau des LR :
     - La courbe à $0.002$ est plate.
     - Les courbes à $0.005$ sont plus courbées.
     - Les courbes à $0.01$ sont plus raides au début.
-Cela démontre que $0.005$ agit comme un pivot : c'est le début de la zone d'efficacité, mais `0.01` est l'optimum avant la zone critique. Il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
+Cela démontre que $0.005$ agit comme un pivot : c'est la zone d'efficacité, il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
 
 La comparaison entre un weight decay nul et modéré ($5\text{e}{-4}$) met en avant la variance du modèle.
 Faible régularisation ($5\text{e}{-4}$) : les courbes montrent un écart grandissant entre le train et le val. Sans contrainte forte sur les poids, le réseau tend à maximiser les coefficients de certaines neurones pour mémoriser le bruit du dataset d'entraînement (= overfitting).
@@ -259,7 +259,7 @@ Architecture superficielle (2,2,2) : Le modèle converge plus vite mais sature r
 Architecture profonde (3,3,3) : L'ajout de blocs résiduels a permis de repérer des caractéristiques plus précises. Le gain de performance sur la validation montre que la difficulté de CIFAR-100 réside davantage dans la complexité des features à extraire que dans la mémorisation, d'où l'usage d'architectures plus profondes comme ResNet/Bottleneck.
 
 Enfin, la largeur du réseau est aussi notable.
-À ces régimes de vitesse (`0.005` et `0.01`), le gradient est assez fort pour optimiser les couches profondes, rendant l'architecture large (`Mid=32`) moins pertinente car plus coûteuse et plus sujette à l'overfitting.
+À ces régimes de vitesse, le gradient est assez fort pour optimiser les couches profondes, rendant l'architecture large (`Mid=32`) moins pertinente car plus coûteuse et plus sujette à l'overfitting.
 
 Les observations confirment que la performance est limitée par la profondeur et la vitesse d'exploration, tout en étant sécurisée par la régularisation. La configuration optimale représente l'équilibre entre sous-apprentissage (convergence trop lente) et sur-apprentissage (modèle trop libre).
 
