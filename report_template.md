@@ -167,7 +167,7 @@ La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.01`.
 
 ![LR finder](./figures/lr_finder.png)
 
-**M4.** Le taux d'apprentissage de `0.005` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable.
+**M4.** Le taux d'apprentissage de `0.002` a été sélectionné car il se situe juste avant la zone d'instabilité, là où la pente de décroissance de la perte est maximale, ce que l’on cherche à trouver pour avoir une convergence rapide tout en restant stable.
 
 
 ---
@@ -177,7 +177,7 @@ La perte reste stable pour des valeurs de LR allant de `0.00002` à `0.01`.
 Une mini grid search a été exécutée pour explorer rapidement l'espace des hyperparamètres clés et identifier la configuration la plus prometteuse pour l'entraînement complet.
 
 Grilles testées (24 runs) :
-  - LR : `{0.002, 0.005, 0.01}`
+  - LR : `{0.0005, 0.001, 0.002}`
   - Weight decay : `{5e-5, 5e-4}`
   - Hyperparamètre modèle A (**Blocks**) : `{[2,2,2], [3,3,3]}`
   - Hyperparamètre modèle B (**Mid**) : `{16, 32}`
@@ -186,28 +186,28 @@ Grilles testées (24 runs) :
 
 | Configuration Type | LR | WD | Hyp-A (Blocks) | Hyp-B (Mid) | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Low Reg Slow** | 0.002 | 5e-5 | [3,3,3] | 16 | À cette faible vitesse, réduire la régularisation n'accélère pas l'apprentissage mais risque de dégrader la généralisation future. |
-| **Conservative** | 0.002 | 5e-4 | [3,3,3] | 16 | Stable et progresse bien, mais reste en dessous du potentiel maximal de vitesse (sous-apprentissage). |
-| **Shallow Baseline** | 0.005 | 5e-4 | [2,2,2] | 16 | Bon LR, mais plafonne plus vite en performance que la version profonde `[3,3,3]`. |
-| **Balanced baseline**| **0.005**| **5e-4** | **[3,3,3]** | **16** | Convergence nette et rapide, sans aucun signe d'instabilité. Bon LR pour des entraînements très longs. |
-| **Wide Balanced** | 0.005 | 5e-4 | [3,3,3] | 32 | Le LR modéré supporte bien la grande charge de paramètres. Le gain de performance ne justifie cependant pas toujours le surcoût de calcul par rapport à `Mid=16`. |
-| **High performance** | **0.01** | **5e-4** | **[3,3,3]** | **16** | Le LR de 0.01 offre la pente la plus raide. Bien que plus "agressif" que le 0.005, il reste stable grâce au batch size de 64. |
-| **Fast & Unregulated**| 0.01 | 5e-5 | [3,3,3] | 16 | La pente d'apprentissage est très raide, mais l'écart Train/Val se creuse vite. Le LR fort nécessite un WD fort pour contenir les poids. |
-| **Wide & risky** | 0.01 | 5e-5 | [3,3,3] | 32 | L'association LR élevé + faible régularisation + grande capacité risque un overfitting. |
+| **Low Reg Slow** | 0.0005 | 5e-5 | [3,3,3] | 16 | À cette faible vitesse, réduire la régularisation n'accélère pas l'apprentissage mais risque de dégrader la généralisation future. |
+| **Conservative** | 0.0005 | 5e-4 | [3,3,3] | 16 | Stable et progresse bien, mais reste en dessous du potentiel maximal de vitesse (sous-apprentissage). |
+| **Shallow Baseline** | 0.001 | 5e-4 | [2,2,2] | 16 | Bon LR, mais plafonne plus vite en performance que la version profonde `[3,3,3]`. |
+| **Balanced baseline**| **0.001**| **5e-4** | **[3,3,3]** | **16** | Convergence nette et rapide, sans aucun signe d'instabilité. Bon LR pour des entraînements très longs. |
+| **Wide Balanced** | 0.001 | 5e-4 | [3,3,3] | 32 | Le LR modéré supporte bien la grande charge de paramètres. Le gain de performance ne justifie cependant pas toujours le surcoût de calcul par rapport à `Mid=16`. |
+| **High performance** | **0.002** | **5e-4** | **[3,3,3]** | **16** | Le LR de 0.002 offre la pente la plus raide. Bien que plus "agressif" que le 0.001, il reste stable grâce au batch size de 64. |
+| **Fast & Unregulated**| 0.002 | 5e-5 | [3,3,3] | 16 | La pente d'apprentissage est très raide, mais l'écart Train/Val se creuse vite. Le LR fort nécessite un WD fort pour contenir les poids. |
+| **Wide & risky** | 0.002 | 5e-5 | [3,3,3] | 32 | L'association LR élevé + faible régularisation + grande capacité risque un overfitting. |
 
 ![GS Train](./figures/grid_search_train.png)
 ![GS Val](./figures/grid_search_val.png)
 
 **M5.** L'analyse de la grille montre une progression claire de la performance avec le LR :
-    - `0.002` est trop linéaire.
-    - `0.005` offre un excellent équilibre et une robustesse totale.
-    - `0.01` permet de gagner encore quelques points de pourcentage en début d'entraînement. Comme aucune divergence n'a été observée à `0.01`, c'est ce taux qui est privilégié pour maximiser l'apprentissage sur une durée courte/moyenne.
+    - `0.0005` est trop linéaire.
+    - `0.001` offre un excellent équilibre et une robustesse totale.
+    - `0.002` permet de gagner encore quelques points de pourcentage en début d'entraînement. Comme aucune divergence n'a été observée à `0.002`, c'est ce taux qui est privilégié pour maximiser l'apprentissage sur une durée courte/moyenne.
 
-Quel que soit le LR choisi (0.005 ou 0.01), l'architecture profonde **`Blocks=[3,3,3]`** surclasse la version superficielle. La régularisation **`WD=5e-4`** est indispensable pour maintenir la cohérence de validation à ces vitesses.
+Quel que soit le LR choisi (0.001 ou 0.002), l'architecture profonde **`Blocks=[3,3,3]`** surclasse la version superficielle. La régularisation **`WD=5e-4`** est indispensable pour maintenir la cohérence de validation à ces vitesses.
 
 `Mid=16` (plutôt que 32) limite l'explosion du nombre de paramètres ce qui comme une régularisation structurelle.
 
-Nous retenons donc la configuration **`LR=0.01`**, **`WD=5e-4`**, **`Blocks=[3,3,3]`**, **`Mid=16`**.
+Nous retenons donc la configuration **`LR=0.002`**, **`WD=5e-4`**, **`Blocks=[3,3,3]`**, **`Mid=16`**.
 
 
 ---
@@ -217,7 +217,7 @@ Nous retenons donc la configuration **`LR=0.01`**, **`WD=5e-4`**, **`Blocks=[3,3
 L'entraînement final est lancé avec la configuration gagnante identifiée ci-dessus, sur une durée étendue pour permettre au modèle d'atteindre sa convergence.
 
 **Configuration finale** :
-  - LR = `0.005`
+  - LR = `0.001`
   - Weight decay = `0.0005`
   - Hyperparamètre modèle A (Blocks) = `[3, 3, 3]`
   - Hyperparamètre modèle B (Mid) = `16`
@@ -228,7 +228,7 @@ Le checkpoint est sauvegardé dans `artifacts/best.ckpt`
 
 **M6.**
 Les courbes illustrent un bon apprentissage. Grâce au LR, la perte chute drastiquement.
-Choisir une certaine "agressivité" avec `0.005` est gagnant : le batch size de 64 encaisse les gradients forts.
+Choisir une certaine "agressivité" avec `0.001` est gagnant : le batch size de 64 encaisse les gradients forts.
 
 Sur les 20 époques, les courbes d'apprentissage montrent un comportement sain. La perte d'entraînement décroît de manière régulière, l'accuracy et la perte de validation convergent vers un plateau stable, aux alentours de $58%-60%$ d'accuracy.
 Aucun surapprentissage marqué n'est observé sur cette courte durée d'entraînement, la perte de validation ne diverge pas significativement par rapport à la perte d'entraînement.
@@ -245,10 +245,10 @@ Une analyse approfondie des variations d'hyperparamètres confirme leur impact s
 
 **M7.**
 Au niveau des LR :
-    - La courbe à $0.002$ est plate.
-    - Les courbes à $0.005$ sont plus courbées.
-    - Les courbes à $0.01$ sont plus raides au début.
-Cela démontre que $0.005$ agit comme un pivot : c'est la zone d'efficacité, il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
+    - La courbe à $0.0005$ est plate.
+    - Les courbes à $0.001$ sont plus courbées.
+    - Les courbes à $0.002$ sont plus raides au début.
+Cela démontre que $0.001$ agit comme un pivot : c'est la zone d'efficacité, il est suffisamment élevé pour converger rapidement, tout en restant en dessous du seuil de divergence observé grâce à lr_finder. 
 
 La comparaison entre un weight decay nul et modéré ($5\text{e}{-4}$) met en avant la variance du modèle.
 Faible régularisation ($5\text{e}{-4}$) : les courbes montrent un écart grandissant entre le train et le val. Sans contrainte forte sur les poids, le réseau tend à maximiser les coefficients de certaines neurones pour mémoriser le bruit du dataset d'entraînement (= overfitting).
